@@ -173,14 +173,16 @@ npm run ratelimit-test -- --api search
 
 ## Which file does what (if you're curious)
 
+All code is in the `himalayas/` folder.
+
 | File | Job |
 |---|---|
-| `index.js` | Asks you the questions, runs everything, saves the file |
-| `crawler.js` | Goes country by country to find jobs, then looks up companies |
-| `jobsApi.js` | Talks to the Himalayas job search |
-| `mcp.js` | Talks to Himalayas' company-details service and reads its answers |
-| `http.js` | Handles waiting, retrying and the 60-second pause |
-| `fields.js` | The list of info you can choose (LinkedIn, CEO, salary, etc.) |
-| `regions.js` | The list of countries |
-| `cache.js` | Remembers company details for 7 days |
-| `ratelimit-test.js` | The test tool from Part 3 |
+| `himalayas/index.js` | Asks you the questions, runs everything, saves the file |
+| `himalayas/crawler.js` | Goes country by country to find jobs, then looks up companies |
+| `himalayas/jobsApi.js` | Talks to the Himalayas job search |
+| `himalayas/mcp.js` | Talks to Himalayas' company-details service and reads its answers |
+| `himalayas/http.js` | Handles waiting, retrying and the 60-second pause |
+| `himalayas/fields.js` | The list of info you can choose (LinkedIn, CEO, salary, etc.) |
+| `himalayas/regions.js` | The list of countries |
+| `himalayas/cache.js` | Remembers company details for 7 days |
+| `himalayas/ratelimit-test.js` | The test tool from Part 3 |
