@@ -161,6 +161,121 @@ npm run ratelimit-test -- --api search
 
 ---
 
+## Part 4: The Himalayas APIs we use
+
+The script uses **two free, public services** from Himalayas:
+
+| | API 1: Job Search | API 2: Company Details (MCP) |
+|---|---|---|
+| **What it gives** | List of jobs | Info about one company |
+| **Address** | `https://himalayas.app/jobs/api/search` | `https://mcp.himalayas.app/mcp` |
+| **Login / API key?** | ❌ Not needed | ❌ Not needed |
+| **Answer format** | JSON (neat data) | Text (the script reads it) |
+| **Results per request** | 20 jobs | 1 company |
+| **Tested limit** | ~190 requests/minute | Not tested yet |
+| **Official docs** | [Jobs API docs](https://himalayas.app/docs/remote-jobs-api) | [MCP docs](https://himalayas.app/docs/remote-jobs-mcp) |
+
+---
+
+### API 1: Job Search
+
+**What it does:** You ask for jobs, and it returns up to 20 per request.
+
+**Try it in the terminal:**
+```bash
+curl 'https://himalayas.app/jobs/api/search?q=mobile%20engineer&country=US'
+```
+
+**Options you can add to the address:**
+
+| Option | What it means | Example |
+|---|---|---|
+| `q` | Search words | `q=mobile%20engineer` (`%20` = space) |
+| `country` | One country (code or name) | `country=US`, `country=Germany` |
+| `worldwide` | Only "work from anywhere" jobs | `worldwide=true` |
+| `exclude_worldwide` | Hide "work from anywhere" jobs | `exclude_worldwide=true` |
+| `seniority` | Experience level | `seniority=Senior` or `Entry-level`, `Mid-level`, `Manager`, `Director`, `Executive` |
+| `employment_type` | Type of job | `employment_type=Full%20Time` or `Part Time`, `Contractor`, `Intern`… |
+| `company` | Only one company's jobs | `company=stripe` |
+| `timezone` | Timezone | `timezone=UTC-5` |
+| `sort` | Order of results | `relevant` (default), `recent`, `salaryAsc`, `salaryDesc` |
+| `page` | Which page (20 jobs each) | `page=2` |
+
+Join options with `&`, e.g. `?q=react&country=CA&sort=recent&page=2`
+
+**What you get back for each job:**
+
+| Field | Meaning |
+|---|---|
+| `title` | Job title |
+| `companyName` / `companySlug` | Company name and its ID on Himalayas (e.g. `stripe`) |
+| `minSalary` / `maxSalary` / `currency` | Salary range (often empty) |
+| `seniority` / `employmentType` | Level and job type |
+| `locationRestrictions` | Countries allowed (empty = anywhere) |
+| `timezoneRestrictions` | Allowed timezones |
+| `applicationLink` | Link to the job |
+| `pubDate` / `expiryDate` | Posted and expiry dates |
+| `description` | Full job text |
+
+**Good to know:**
+- ⚠️ **Only one country per request.** `country=US,CA` and `country=Europe` don't work. That's why the script asks country by country.
+- The top of each answer includes **`totalCount`**, the total number of matching jobs.
+- There's also a **"browse everything"** address with no filters: `https://himalayas.app/jobs/api` (about 98,000 jobs, 20 at a time).
+
+---
+
+### API 2: Company Details (MCP server)
+
+**What it does:** You give it a company ID (e.g. `stripe`), and it returns the company's details.
+
+**What "MCP" means:** it's a service built for AI assistants (like Claude or ChatGPT), but any program can use it. You send a small message, and it replies with text.
+
+**Try it in the terminal:**
+```bash
+curl -s https://mcp.himalayas.app/mcp \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call",
+       "params":{"name":"get_company_details","arguments":{"company_slug":"stripe"}}}'
+```
+
+**What it replies (simplified):**
+```
+# Stripe
+Size: 1001-5000
+Founded: 2009
+CEO: Patrick Collison
+Markets: Payments, Developer-Tools, ...
+Website: https://stripe.com
+Social: Twitter: ... • LinkedIn: https://linkedin.com/company/stripe • Facebook: ...
+```
+
+**What the script picks out of it:** domain, website, LinkedIn, other socials, CEO, size, founded year, hiring countries, markets, tech stack and the "about" text.
+
+**Good to know:**
+- ⚠️ The reply is **text written for an AI to read, not neat data**. The script has to read it line by line. If Himalayas changes the wording, that part of the script may need fixing.
+- If a company has no profile, it replies: *"Company '…' not found."*
+- The MCP server has **41 tools** in total. Other useful free ones:
+  - `search_companies`: find companies by keyword, country or tech stack
+  - `get_salary_data`: average salary for a job title
+  - `search_jobs`: like API 1, with extra filters (minimum salary, benefits)
+
+---
+
+### Things that apply to both APIs
+
+| Topic | What to know |
+|---|---|
+| **Login** | None needed. Both are free and public. |
+| **Data freshness** | Himalayas updates its data **once every 24 hours**, so running more than once a day gives nothing new. |
+| **Caching** | Himalayas remembers identical searches for up to 1 hour (via Cloudflare). The company service doesn't cache. |
+| **Too many requests** | You get **429**, and should wait 60 seconds (see Part 2). |
+| **Credit** | If you show this data publicly, you must **link back to himalayas.app**. |
+| **Not available** | HR contacts, executives other than the CEO, and emails. |
+| **Need more?** | Email **hi@himalayas.app** for a higher limit. |
+
+---
+
 ## Where things are saved
 
 | Folder | What's inside |
