@@ -1,0 +1,17 @@
+{
+  "name": "scrap",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "himalayas": "node himalayas/index.js",
+    "ratelimit-test": "node himalayas/ratelimit-test.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@inquirer/prompts": "8.7.2"
+  },
+  "type": "module"
+}
