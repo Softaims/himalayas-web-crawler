@@ -28,10 +28,15 @@ const log = (msg = '') => console.log(msg);
 async function askOptions() {
   log('\n🏔  Himalayas remote jobs crawler  (all Himalayas jobs are remote)\n');
 
-  const keywords = (await input({
-    message: 'Search keywords (leave empty for all jobs):',
+  const typed = (await input({
+    message: 'Search keywords, e.g. "react native" (leave empty for all jobs):',
     default: 'mobile engineer',
   })).trim();
+  // Himalayas requires EVERY word to match, so "react native jobs in United
+  // States" finds 0 jobs while "react native" finds 286. Strip filler words and
+  // place names (location is chosen in the next question).
+  const keywords = cleanKeywords(typed);
+  if (keywords !== typed) log(`  → searching for "${keywords || '(all jobs)'}" (location and filler words removed)`);
 
   const regionSelection = await checkbox({
     message: 'Regions (space = toggle, a = all, enter = confirm):',
@@ -77,6 +82,18 @@ async function askOptions() {
   return { keywords, regionSelection, countries, includeWorldwide, selectedKeys, maxJobs };
 }
 
+const FILLER_WORDS = /\b(remote|jobs?|positions?|roles?|openings?|vacanc(?:y|ies)|hiring|compan(?:y|ies)|work|from|in|for|at|near|the|an?)\b/gi;
+const PLACE_NAMES = [...NORTH_AMERICA, ...EUROPE].map((c) => c.name)
+  .concat(['North America', 'America', 'Europe', 'European Union', 'USA', 'UK', 'EU', 'anywhere', 'worldwide'])
+  .sort((a, b) => b.length - a.length); // "United Kingdom" before "United"
+
+function cleanKeywords(text) {
+  let q = text;
+  for (const name of PLACE_NAMES) q = q.replace(new RegExp(`\\b${name}\\b`, 'gi'), ' ');
+  q = q.replace(/\bUS\b/g, ' '); // uppercase only, so a word like "us" in a query survives
+  return q.replace(FILLER_WORDS, ' ').replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
 const toChoice = (f) => ({ name: f.label, value: f.key, checked: Boolean(f.checked) });
 
 async function run(opts) {
@@ -111,6 +128,10 @@ async function run(opts) {
     q: keywords, countries, excludeWorldwide: !includeWorldwide, maxJobs, signal, log, onRetry, gate: searchGate,
   });
   log(`  ✔ ${jobs.size} unique jobs (${requests} requests)`);
+  if (!jobs.size && !signal.aborted) {
+    log('  ⚠ No jobs matched. Himalayas needs every keyword to appear in the job,');
+    log('    so try fewer or more common words (e.g. "react native" instead of "senior react native mobile dev").');
+  }
 
   const slugs = [...new Set([...jobs.values()].map((j) => j.raw.companySlug))];
   let enrich = { details: new Map(), fetched: 0, failed: 0 };

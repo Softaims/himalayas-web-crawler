@@ -16,6 +16,9 @@ npm run himalayas
 
 ### The questions it asks you
 1. **What to search for**, e.g. "mobile engineer"
+   - Keep it **short and simple**: Himalayas only shows jobs that contain **every** word you type.
+     "react native" finds 286 US jobs; "react native jobs in United States" found 0.
+   - Don't type the location here; that's the next question. The script removes words like "jobs", "remote", "in" and country names automatically.
 2. **Which countries:** US, Canada, Europe (or pick countries one by one)
 3. **Include "work from anywhere" jobs?** Usually No
 4. **What info you want:** LinkedIn, CEO, salary, etc. (company name and website are always included)
